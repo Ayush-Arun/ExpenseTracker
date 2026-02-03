@@ -1,60 +1,58 @@
 # Expense Tracker (Spring Boot)
 
-A simple REST API built using Spring Boot, Spring Data JPA, and PostgreSQL.
+Simple REST API built using Spring Boot, Spring Data JPA, and PostgreSQL.
 
 ## Features
-- Create, read, update, delete expenses
+- CRUD operations for expenses
 - Get expense by ID
 - Get total expense count
 - Get total amount grouped by category
+
 
 ## Tech Stack
 - Java
 - Spring Boot
 - Spring Data JPA
 - PostgreSQL
-- Maven
+
 
 ## Project Structure
-src/main/java/com/prac/practice  
-controller  
-service  
-repository  
-entity  
-PracticeApplication.java  
+- src/main/java/com/prac/practice
+  - controller
+  - service
+  - repository
+  - entity
+- PracticeApplication.java
 
-## Configuration
+  
+## How to Run Locally
+1. Clone the repository
+2. Create PostgreSQL database named `expense_db`
+3. Update credentials in `application.properties`
+4. Mainly password from `application.properties`
+5. Run the application with:
+   mvn spring-boot:run
+- Base URL: http://localhost:8080/expenses
 
-application.properties
 
-spring.application.name=practice  
-spring.datasource.url=jdbc:postgresql://localhost:5432/expense_db  
-spring.datasource.username=postgres  
-spring.datasource.password=ur_password  
+## API Endpoints (Test using Postman)
 
-spring.jpa.hibernate.ddl-auto=update  
-spring.jpa.show-sql=true  
+The following operations can be tested using Postman.
 
-## API Endpoints
+| Method | Endpoint | Purpose |
+|------|--------|---------|
+| POST | /expenses | Create an expense |
+| GET | /expenses | Get all expenses |
+| GET | /expenses/id/{id} | Get expense by ID |
+| PUT | /expenses/id/{id} | Update an expense |
+| DELETE | /expenses/id/{id} | Delete an expense |
+| GET | /expenses/count | Get total number of expenses |
+| GET | /expenses/total-by-category | Get total amount grouped by category |
 
-POST   /expenses  
-GET    /expenses  
-GET    /expenses/id/{id}  
-PUT    /expenses/id/{id}  
-DELETE /expenses/id/{id}  
-GET    /expenses/count  
-GET    /expenses/total-by-category  
 
-## Sample Request Body
-
+## Sample JSON
 {
   "title": "Coffee",
   "category": "Food",
   "amount": 120
 }
-
-## How to Run
-- Create PostgreSQL database named expense_db
-- Update database credentials
-- Run the Spring Boot application
-- Access APIs at http://localhost:8080
