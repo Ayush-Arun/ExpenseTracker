@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+
 @RestController
 @RequestMapping("/expenses")
 public class ExpenseController {
@@ -30,6 +31,7 @@ public class ExpenseController {
 
     @GetMapping("/id/{myid}")
     public Expense findExpenseById(@PathVariable("myid") Long myid){
+
         return expenseService.findById(myid);
     }
 

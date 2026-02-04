@@ -1,6 +1,7 @@
 package com.prac.practice.service;
 
 import com.prac.practice.entity.Expense;
+import com.prac.practice.exception.ExpenseNotFoundException;
 import com.prac.practice.repository.ExpenseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class ExpenseService {
     }
 
     public Expense findById(Long id) {
-        return expenseRepository.findById(id).orElse(null);
+        return expenseRepository.findById(id).orElseThrow(()->new ExpenseNotFoundException("Expense not found "+id));
     }
 
     public List<Expense> findAll(){
@@ -37,7 +38,7 @@ public class ExpenseService {
     public Expense updateById(Long id, Expense newExpense) {
 
         Expense existing = expenseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Expense not found"));
+                .orElseThrow(() -> new ExpenseNotFoundException("Expense not found"));
 
         existing.setTitle(newExpense.getTitle());
         existing.setCategory(newExpense.getCategory());

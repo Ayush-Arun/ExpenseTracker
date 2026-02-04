@@ -1,4 +1,7 @@
 package com.prac.practice.exception;
 
-public class ExpenseNotFoundException {
+public class ExpenseNotFoundException extends RuntimeException {
+    public ExpenseNotFoundException(String message) {
+        super(message);
+    }
 }
