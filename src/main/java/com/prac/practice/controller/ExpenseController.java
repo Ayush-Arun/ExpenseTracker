@@ -1,8 +1,12 @@
 package com.prac.practice.controller;
 
-import com.prac.practice.entity.Expense;
+import com.prac.practice.dto.ExpenseRequestDto;
+import com.prac.practice.dto.ExpenseResponseDto;
 import com.prac.practice.service.ExpenseService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,29 +24,30 @@ public class ExpenseController {
     }
 
     @PostMapping
-    public Expense createExpense(@RequestBody Expense expense) {
-        return expenseService.save(expense);
+    public ResponseEntity<ExpenseResponseDto> createExpense(@Valid @RequestBody ExpenseRequestDto dto) {
+        ExpenseResponseDto expenseResponseDto = expenseService.save(dto);
+        return new ResponseEntity<>(expenseResponseDto, HttpStatus.CREATED);
     }
 
     @GetMapping
-    public List<Expense> findAll(){
-        return expenseService.findAll();
+    public ResponseEntity<List<ExpenseResponseDto>> findAllExpenses() {
+        return new ResponseEntity<>(expenseService.findAll(),HttpStatus.OK);
     }
 
     @GetMapping("/id/{myid}")
-    public Expense findExpenseById(@PathVariable("myid") Long myid){
-
-        return expenseService.findById(myid);
+    public ResponseEntity<ExpenseResponseDto> findExpenseById(@PathVariable("myid") Long myid){
+        return new ResponseEntity<>(expenseService.findById(myid),HttpStatus.OK);
     }
 
     @PutMapping("/id/{myid}")
-    public Expense updateExpense(@PathVariable("myid") Long myid,@RequestBody Expense expense){
-        return expenseService.updateById(myid,expense);
+    public ResponseEntity<ExpenseResponseDto> updateExpense(@PathVariable("myid") Long myid,@Valid @RequestBody ExpenseRequestDto dto){
+        return new ResponseEntity<>(expenseService.updateById(myid,dto),HttpStatus.OK);
     }
 
     @DeleteMapping("/id/{myid}")
-    public void deleteById(@PathVariable("myid") Long myid){
+    public ResponseEntity<Void> deleteExpenseById(@PathVariable("myid") Long myid){
         expenseService.deleteById(myid);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/count")

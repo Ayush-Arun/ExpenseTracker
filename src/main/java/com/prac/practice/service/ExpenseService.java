@@ -1,7 +1,10 @@
 package com.prac.practice.service;
 
+import com.prac.practice.dto.ExpenseRequestDto;
+import com.prac.practice.dto.ExpenseResponseDto;
 import com.prac.practice.entity.Expense;
 import com.prac.practice.exception.ExpenseNotFoundException;
+import com.prac.practice.mapper.ExpenseMapper;
 import com.prac.practice.repository.ExpenseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -20,41 +24,63 @@ public class ExpenseService {
         this.expenseRepository = expenseRepository;
     }
 
-    public Expense findById(Long id) {
-        return expenseRepository.findById(id).orElseThrow(()->new ExpenseNotFoundException("Expense not found "+id));
+    public ExpenseResponseDto findById(Long id) {
+        Expense e= expenseRepository.findById(id).orElseThrow(()->new ExpenseNotFoundException("Expense not found "+id));
+        return ExpenseMapper.toExpenseResponseDto(e);
     }
 
-    public List<Expense> findAll(){
-        return expenseRepository.findAll();
+    public List<ExpenseResponseDto> findAll(){
+        return expenseRepository.findAll().stream().
+                map(expense -> ExpenseMapper.toExpenseResponseDto(expense)).
+                toList();
     }
 
-    public Expense save(Expense expense) {
-        return expenseRepository.save(expense);
+    public ExpenseResponseDto save(ExpenseRequestDto expenseRequestDto) {
+        Expense expense = ExpenseMapper.toEntity(expenseRequestDto);
+        Expense saved = expenseRepository.save(expense);
+        return ExpenseMapper.toExpenseResponseDto(saved);
     }
 
     public void deleteById(Long id) {
+        if(!expenseRepository.existsById(id)){
+            throw new ExpenseNotFoundException("Expense not found "+id);
+        }
         expenseRepository.deleteById(id);
     }
-    public Expense updateById(Long id, Expense newExpense) {
+
+    public ExpenseResponseDto updateById(Long id, ExpenseRequestDto expenseRequestDto) {
 
         Expense existing = expenseRepository.findById(id)
                 .orElseThrow(() -> new ExpenseNotFoundException("Expense not found"));
 
-        existing.setTitle(newExpense.getTitle());
-        existing.setCategory(newExpense.getCategory());
-        existing.setAmount(newExpense.getAmount());
+        existing.setTitle(expenseRequestDto.getTitle());
+        existing.setCategory(expenseRequestDto.getCategory());
+        existing.setAmount(expenseRequestDto.getAmount());
 
-        return expenseRepository.save(existing);
+        Expense updated = expenseRepository.save(existing);
+
+        return ExpenseMapper.toExpenseResponseDto(updated);
     }
 
-    public Map<String,Double> getTotalAmountByCategory(){
+    public Map<String, Double> getTotalAmountByCategory() {
         List<Expense> expenses = expenseRepository.findAll();
-        Map<String,Double> totals = new HashMap<>();
-        for(Expense expense : expenses){
-            totals.merge(expense.getCategory(),expense.getAmount(),Double::sum);
+        Map<String, Double> totals = new HashMap<>();
+
+        for (Expense expense : expenses) {
+            String category = expense.getCategory();
+            Double amount = expense.getAmount();
+
+            if (totals.containsKey(category)) {
+                Double currentTotal = totals.get(category);
+                totals.put(category, currentTotal + amount);
+            } else {
+                totals.put(category, amount);
+            }
         }
+
         return totals;
     }
+
 
     public long getExpenseCount(){
         return expenseRepository.count();
