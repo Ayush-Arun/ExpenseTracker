@@ -1,8 +1,11 @@
 package com.prac.practice.exception;
 
+import lombok.Getter;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@Getter
 public class ErrorResponse {
     private String message;
     private Map<String, String> errors;
@@ -21,19 +24,4 @@ public class ErrorResponse {
         this.status = status;
     }
 
-    public Map<String, String> getErrors() {
-        return errors;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public int getStatus() {
-        return status;
-    }
 }

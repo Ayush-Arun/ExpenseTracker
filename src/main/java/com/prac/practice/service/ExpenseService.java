@@ -7,6 +7,8 @@ import com.prac.practice.exception.ExpenseNotFoundException;
 import com.prac.practice.mapper.ExpenseMapper;
 import com.prac.practice.repository.ExpenseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -29,10 +31,9 @@ public class ExpenseService {
         return ExpenseMapper.toExpenseResponseDto(e);
     }
 
-    public List<ExpenseResponseDto> findAll(){
-        return expenseRepository.findAll().stream().
-                map(expense -> ExpenseMapper.toExpenseResponseDto(expense)).
-                toList();
+    public Page<ExpenseResponseDto> findAll(Pageable pageable) {
+        return expenseRepository.findAll(pageable).
+                map(expense -> ExpenseMapper.toExpenseResponseDto(expense));
     }
 
     public ExpenseResponseDto save(ExpenseRequestDto expenseRequestDto) {
