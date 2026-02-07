@@ -26,6 +26,13 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND.value());
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleExpenseNotFoundException(UserNotFoundException ex) {
+        ErrorResponse errorResponse=new ErrorResponse(ex.getMessage(),
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value());
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
