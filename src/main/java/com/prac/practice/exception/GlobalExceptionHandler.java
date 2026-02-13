@@ -2,6 +2,7 @@ package com.prac.practice.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -51,6 +52,32 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getMessage(),
+                LocalDateTime.now(),
+                HttpStatus.FORBIDDEN.value()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getMessage(),
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAnyException(Exception ex) {
 

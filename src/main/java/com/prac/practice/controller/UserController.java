@@ -1,8 +1,9 @@
 package com.prac.practice.controller;
 
+import com.prac.practice.dto.UserResponseDto;
 import com.prac.practice.entity.User;
+import com.prac.practice.exception.UsernameAlreadyExistsException;
 import com.prac.practice.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,9 +17,9 @@ public class UserController {
         this.userService = userService;
     }
     
-    @GetMapping("{username}")
-    public ResponseEntity<User> getUser(@PathVariable("username") String username){
-        return ResponseEntity.ok(userService.getByUser(username));
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDto> me() {
+        return ResponseEntity.ok(userService.getCurrentUser());
     }
 
     @PostMapping("/create")
