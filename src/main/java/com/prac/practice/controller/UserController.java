@@ -3,6 +3,7 @@ package com.prac.practice.controller;
 import com.prac.practice.dto.UserResponseDto;
 import com.prac.practice.entity.User;
 import com.prac.practice.exception.UsernameAlreadyExistsException;
+import com.prac.practice.mapper.UserMapper;
 import com.prac.practice.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +24,12 @@ public class UserController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<User> createUser
+    public ResponseEntity<UserResponseDto> createUser
             (@RequestParam String username,
              @RequestParam String password){
-        return ResponseEntity.ok(userService.createUser(username, password));
+        User user = userService.createUser(username, password);
+        return ResponseEntity.ok(
+                UserMapper.userToUserResponseDto(user)
+        );
     }
 }

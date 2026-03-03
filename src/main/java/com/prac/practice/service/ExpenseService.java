@@ -9,12 +9,13 @@ import com.prac.practice.exception.UserNotFoundException;
 import com.prac.practice.mapper.ExpenseMapper;
 import com.prac.practice.repository.ExpenseRepository;
 import com.prac.practice.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,112 +28,212 @@ public class ExpenseService {
     private final UserRepository userRepository;
 
     @Autowired
-    public ExpenseService(ExpenseRepository expenseRepository, UserRepository userRepository) {
+    public ExpenseService(
+            ExpenseRepository expenseRepository,
+            UserRepository userRepository) {
+
         this.expenseRepository = expenseRepository;
         this.userRepository = userRepository;
     }
 
+    /* =====================================================
+       CURRENT USER
+     ===================================================== */
+
     private User getCurrentUserEntity() {
-        String username = SecurityContextHolder.getContext()
+
+        String username = SecurityContextHolder
+                .getContext()
                 .getAuthentication()
                 .getName();
 
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() ->
+                        new UserNotFoundException("User not found"));
     }
+
+    /* =====================================================
+       ROLE CHECK
+     ===================================================== */
+
+    private boolean isAdmin(User user) {
+        return user.getRole().equals("ROLE_ADMIN")
+                || user.getRole().equals("ROLE_SUPER_ADMIN");
+    }
+
+    /* =====================================================
+       AUTHORIZATION CHECK (CENTRALIZED)
+     ===================================================== */
+
+    private void checkExpenseAccess(
+            Expense expense,
+            User currentUser,
+            String message) {
+
+        boolean owner =
+                expense.getUser()
+                        .getId()
+                        .equals(currentUser.getId());
+
+        if (!owner && !isAdmin(currentUser)) {
+            throw new AccessDeniedException(message);
+        }
+    }
+
+    /* =====================================================
+       FIND BY ID
+     ===================================================== */
 
     public ExpenseResponseDto findById(Long id) {
+
         User currentUser = getCurrentUserEntity();
 
-        Expense e = expenseRepository.findById(id)
-                .orElseThrow(() -> new ExpenseNotFoundException("Expense not found " + id));
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() ->
+                        new ExpenseNotFoundException(
+                                "Expense not found " + id));
 
-        if (!e.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You are not allowed to access this expense");
-        }
+        checkExpenseAccess(
+                expense,
+                currentUser,
+                "You are not allowed to access this expense"
+        );
 
-        return ExpenseMapper.toExpenseResponseDto(e);
+        return ExpenseMapper.toExpenseResponseDto(expense);
     }
 
-
+    /* =====================================================
+       FIND ALL
+     ===================================================== */
 
     public Page<ExpenseResponseDto> findAll(Pageable pageable) {
-        User currentUser = getCurrentUserEntity();
-        return expenseRepository.findByUser(currentUser, pageable)
-                .map(ExpenseMapper::toExpenseResponseDto);
-    }
 
-    public ExpenseResponseDto save(ExpenseRequestDto expenseRequestDto) {
         User currentUser = getCurrentUserEntity();
 
-        Expense expense = ExpenseMapper.toEntity(expenseRequestDto);
-        expense.setUser(currentUser); // 🔑 attach owner
+        Page<Expense> expenses;
 
-        Expense saved = expenseRepository.save(expense);
-        return ExpenseMapper.toExpenseResponseDto(saved);
+        if (isAdmin(currentUser)) {
+            expenses = expenseRepository.findAll(pageable);
+        } else {
+            expenses =
+                    expenseRepository.findByUser(
+                            currentUser,
+                            pageable);
+        }
+
+        return expenses.map(
+                ExpenseMapper::toExpenseResponseDto);
     }
 
+    /* =====================================================
+       CREATE
+     ===================================================== */
+
+    public ExpenseResponseDto save(
+            ExpenseRequestDto dto) {
+
+        User currentUser = getCurrentUserEntity();
+
+        Expense expense =
+                ExpenseMapper.toEntity(dto);
+
+        expense.setUser(currentUser);
+
+        Expense saved =
+                expenseRepository.save(expense);
+
+        return ExpenseMapper
+                .toExpenseResponseDto(saved);
+    }
+
+    /* =====================================================
+       UPDATE
+     ===================================================== */
+
+    public ExpenseResponseDto updateById(
+            Long id,
+            ExpenseRequestDto dto) {
+
+        User currentUser = getCurrentUserEntity();
+
+        Expense existing =
+                expenseRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ExpenseNotFoundException(
+                                        "Expense not found"));
+
+        checkExpenseAccess(
+                existing,
+                currentUser,
+                "You are not allowed to update this expense"
+        );
+
+        existing.setTitle(dto.getTitle());
+        existing.setCategory(dto.getCategory());
+        existing.setAmount(dto.getAmount());
+
+        Expense updated =
+                expenseRepository.save(existing);
+
+        return ExpenseMapper
+                .toExpenseResponseDto(updated);
+    }
+
+    /* =====================================================
+       DELETE
+     ===================================================== */
 
     public void deleteById(Long id) {
+
         User currentUser = getCurrentUserEntity();
 
-        Expense existing = expenseRepository.findById(id)
-                .orElseThrow(() -> new ExpenseNotFoundException("Expense not found " + id));
+        Expense existing =
+                expenseRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ExpenseNotFoundException(
+                                        "Expense not found " + id));
 
-        if (!existing.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You are not allowed to delete this expense");
-        }
+        checkExpenseAccess(
+                existing,
+                currentUser,
+                "You are not allowed to delete this expense"
+        );
 
         expenseRepository.delete(existing);
     }
 
-
-    public ExpenseResponseDto updateById(Long id, ExpenseRequestDto expenseRequestDto) {
-        User currentUser = getCurrentUserEntity();
-
-        Expense existing = expenseRepository.findById(id)
-                .orElseThrow(() -> new ExpenseNotFoundException("Expense not found"));
-
-        if (!existing.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You are not allowed to update this expense");
-        }
-
-        existing.setTitle(expenseRequestDto.getTitle());
-        existing.setCategory(expenseRequestDto.getCategory());
-        existing.setAmount(expenseRequestDto.getAmount());
-
-        Expense updated = expenseRepository.save(existing);
-
-        return ExpenseMapper.toExpenseResponseDto(updated);
-    }
-
+    /* =====================================================
+       ANALYTICS
+     ===================================================== */
 
     public Map<String, Double> getTotalAmountByCategory() {
-        User currentUser = getCurrentUserEntity();
-        List<Expense> expenses = expenseRepository.findByUser(currentUser);
 
-        Map<String, Double> totals = new HashMap<>();
+        User currentUser = getCurrentUserEntity();
+
+        List<Expense> expenses =
+                expenseRepository.findByUser(currentUser);
+
+        Map<String, Double> totals =
+                new HashMap<>();
 
         for (Expense expense : expenses) {
-            String category = expense.getCategory();
-            Double amount = expense.getAmount();
 
-            if (totals.containsKey(category)) {
-                Double currentTotal = totals.get(category);
-                totals.put(category, currentTotal + amount);
-            } else {
-                totals.put(category, amount);
-            }
+            totals.merge(
+                    expense.getCategory(),
+                    expense.getAmount(),
+                    Double::sum
+            );
         }
 
         return totals;
     }
 
+    public long getExpenseCount() {
 
-    public long getExpenseCount(){
         User currentUser = getCurrentUserEntity();
-        return expenseRepository.findByUser(currentUser).size();
+
+        return expenseRepository
+                .findByUser(currentUser)
+                .size();
     }
-
-
 }

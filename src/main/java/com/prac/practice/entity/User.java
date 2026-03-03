@@ -29,6 +29,9 @@ public class User {
     @NotBlank
     private String password;
 
+    @Column(nullable = false)
+    private String role;
+
     @OneToMany(mappedBy = "user")
     private List<Expense> expenses = new ArrayList<>();
 }
